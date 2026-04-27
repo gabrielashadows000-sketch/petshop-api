@@ -15,20 +15,22 @@ $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
 
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
-    
-    // Esto crea la tabla dentro de defaultdb aunque no la veas en el panel de Aiven
-    $pdo->exec("CREATE TABLE IF NOT EXISTS productos (id INT AUTO_INCREMENT PRIMARY KEY, nombre VARCHAR(100), precio DECIMAL(10,2))");
-    
-    // Insertamos un dato para probar
-    $pdo->exec("INSERT INTO productos (nombre, precio) VALUES ('Croquetas Petshop', 25.00)");
-    
-    // Consultamos los datos
+
+    // 1. Crear la tabla físicamente
+    $sql_crear = "CREATE TABLE IF NOT EXISTS productos (
+        id INT AUTO_INCREMENT PRIMARY KEY, 
+        nombre VARCHAR(100), 
+        precio DECIMAL(10,2)
+    )";
+    $pdo->exec($sql_crear);
+
+    // 2. Insertar un dato real para que no esté vacía
+    $pdo->exec("INSERT INTO productos (nombre, precio) VALUES ('Producto Petshop Prueba', 19.99)");
+
+    // 3. Consultar y mostrar el resultado en JSON
     $stmt = $pdo->query("SELECT * FROM productos");
-    $resultado = $stmt->fetchAll();
-    
-    echo json_encode($resultado);
+    echo json_encode($stmt->fetchAll());
 
 } catch (PDOException $e) {
-    echo "Error: " . $e->getMessage();
+    echo json_encode(["error" => $e->getMessage()]);
 }
-
