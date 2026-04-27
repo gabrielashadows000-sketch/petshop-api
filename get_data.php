@@ -14,31 +14,21 @@ $ca_path = __DIR__ . '/ca.pem'; // Asegúrate de subir el ca.pem a Render
 $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
 
 try {
-    // 3. Configuración de conexión con SSL obligatorio
-    $options = [
-        PDO::MYSQL_ATTR_SSL_CA => $ca_path,
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ];
-
     $pdo = new PDO($dsn, $user, $pass, $options);
-
-    // 4. Consulta a la base de datos
-    // Cambia "productos" por el nombre de tu tabla real
-    $sql = "SELECT * FROM productos"; 
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute();
-
-    $resultados = $stmt->fetchAll();
-
-    // 5. Enviar resultados a Android
-    echo json_encode($resultados);
+    
+    // Esto crea la tabla dentro de defaultdb aunque no la veas en el panel de Aiven
+    $pdo->exec("CREATE TABLE IF NOT EXISTS productos (id INT AUTO_INCREMENT PRIMARY KEY, nombre VARCHAR(100), precio DECIMAL(10,2))");
+    
+    // Insertamos un dato para probar
+    $pdo->exec("INSERT INTO productos (nombre, precio) VALUES ('Croquetas Petshop', 25.00)");
+    
+    // Consultamos los datos
+    $stmt = $pdo->query("SELECT * FROM productos");
+    $resultado = $stmt->fetchAll();
+    
+    echo json_encode($resultado);
 
 } catch (PDOException $e) {
-    // Si hay error, enviamos el mensaje en formato JSON también
-    echo json_encode([
-        "error" => "Error de conexión",
-        "mensaje" => $e->getMessage()
-    ]);
+    echo "Error: " . $e->getMessage();
 }
-?>
+
