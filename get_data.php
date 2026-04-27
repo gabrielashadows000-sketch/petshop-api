@@ -14,23 +14,29 @@ $ca_path = __DIR__ . '/ca.pem'; // Asegúrate de subir el ca.pem a Render
 $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
 
 try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
+    $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db", $user, $pass, [
+        PDO::MYSQL_ATTR_SSL_CA => $ca_path,
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+    ]);
 
-    // 1. Crear la tabla físicamente
-    $sql_crear = "CREATE TABLE IF NOT EXISTS productos (
-        id INT AUTO_INCREMENT PRIMARY KEY, 
-        nombre VARCHAR(100), 
-        precio DECIMAL(10,2)
-    )";
-    $pdo->exec($sql_crear);
+    // 1. Crear la tabla con todas tus columnas
+    $pdo->exec("CREATE TABLE IF NOT EXISTS productos (
+        id INT PRIMARY KEY,
+        nombre VARCHAR(255),
+        precio DECIMAL(10,2),
+        marca VARCHAR(100),
+        categoria VARCHAR(100)
+    )");
 
-    // 2. Insertar un dato real para que no esté vacía
-    $pdo->exec("INSERT INTO productos (nombre, precio) VALUES ('Producto Petshop Prueba', 19.99)");
+    // 2. Insertar tus productos (He puesto los primeros de tu imagen)
+    $pdo->exec("INSERT IGNORE INTO productos VALUES 
+        (1, 'Alimento Perro Adulto 15kg', 46, 'Dog Chow', 'Perros'),
+        (2, 'Alimento Cachorro 3kg', 13, 'Pro Plan', 'Perros'),
+        (3, 'Snack Hueso de Carnaza', 4, 'Petys', 'Perros'),
+        (4, 'Galletas Horneadas Pollo', 5, 'Barkys', 'Perros')");
 
-    // 3. Consultar y mostrar el resultado en JSON
-    $stmt = $pdo->query("SELECT * FROM productos");
-    echo json_encode($stmt->fetchAll());
+    echo "✅ ¡DATOS SUBIDOS A AIVEN CON ÉXITO!";
 
-} catch (PDOException $e) {
-    echo json_encode(["error" => $e->getMessage()]);
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage();
 }
