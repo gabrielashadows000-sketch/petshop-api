@@ -14,29 +14,18 @@ $ca_path = __DIR__ . '/ca.pem'; // Asegúrate de subir el ca.pem a Render
 $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
 
 try {
+    // Configuración limpia de la conexión
     $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db", $user, $pass, [
         PDO::MYSQL_ATTR_SSL_CA => $ca_path,
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC // Esto quita los números repetidos
     ]);
 
-    // 1. Crear la tabla con todas tus columnas
-    $pdo->exec("CREATE TABLE IF NOT EXISTS productos (
-        id INT PRIMARY KEY,
-        nombre VARCHAR(255),
-        precio DECIMAL(10,2),
-        marca VARCHAR(100),
-        categoria VARCHAR(100)
-    )");
+    $stmt = $pdo->query("SELECT * FROM productos");
+    $datos = $stmt->fetchAll();
 
-    // 2. Insertar tus productos (He puesto los primeros de tu imagen)
-    $pdo->exec("INSERT IGNORE INTO productos VALUES 
-        (1, 'Alimento Perro Adulto 15kg', 46, 'Dog Chow', 'Perros'),
-        (2, 'Alimento Cachorro 3kg', 13, 'Pro Plan', 'Perros'),
-        (3, 'Snack Hueso de Carnaza', 4, 'Petys', 'Perros'),
-        (4, 'Galletas Horneadas Pollo', 5, 'Barkys', 'Perros')");
-
-    echo "✅ ¡DATOS SUBIDOS A AIVEN CON ÉXITO!";
+    echo json_encode($datos);
 
 } catch (Exception $e) {
-    echo "Error: " . $e->getMessage();
+    echo json_encode(["error" => $e->getMessage()]);
 }
