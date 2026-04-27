@@ -12,26 +12,26 @@ $pass = 'AVNS_WmMSQFNpYD3AIkKzPGJ'; // Pon aquí la contraseña de Aiven
 $ca_path = __DIR__ . '/ca.pem'; // Asegúrate de subir el ca.pem a Render
 
 $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
-
 try {
     $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db", $user, $pass, [
         PDO::MYSQL_ATTR_SSL_CA => $ca_path,
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
 
-    // 1. CREAR LA TABLA CON LA ESTRUCTURA CORRECTA
-    $pdo->exec("CREATE TABLE IF NOT EXISTS productos (
-        id INT PRIMARY KEY,
-        nombre VARCHAR(255),
-        precio DECIMAL(10,2),
-        marca VARCHAR(100),
+    // 1. BORRAR LA TABLA VIEJA PARA QUITAR EL ERROR DE "MARCA"
+    $pdo->exec("DROP TABLE IF EXISTS productos");
+
+    // 2. CREAR LA TABLA NUEVA CON TODAS LAS COLUMNAS
+    $pdo->exec("CREATE TABLE productos (
+        id INT PRIMARY KEY, 
+        nombre VARCHAR(255), 
+        precio DECIMAL(10,2), 
+        marca VARCHAR(100), 
         categoria VARCHAR(100)
     )");
 
-    // 2. VACIAR LA TABLA SI YA TIENE DATOS DE PRUEBA (Opcional)
-    $pdo->exec("TRUNCATE TABLE productos");
-
-    // 3. INSERTAR TODOS TUS PRODUCTOS DE GOLPE
+    // 3. INSERTAR TUS 30 PRODUCTOS
     $sql = "INSERT INTO productos (id, nombre, precio, marca, categoria) VALUES
     (1, 'Alimento Perro Adulto 15kg', 46, 'Dog Chow', 'Perros'),
     (2, 'Alimento Cachorro 3kg', 13, 'Pro Plan', 'Perros'),
@@ -62,11 +62,13 @@ try {
     (27, 'Filtro Interno Acuario', 19, 'Fluval', 'Peces'),
     (28, 'Piedra Calcio Loros', 2, 'LivingWorld', 'Aves'),
     (29, 'Juguete Espejo Aves', 4, 'Penn-Plax', 'Aves'),
-    (30, 'Champú en Seco (Espuma)', 11, 'Beaphar', 'Gatos');";
-
+    (30, 'Champú en Seco (Espuma)', 11, 'Beaphar', 'Gatos')";
+    
     $pdo->exec($sql);
 
-    echo json_encode(["status" => "¡Base de datos cargada con éxito en Aiven!"]);
+    // 4. MOSTRAR TODO
+    $stmt = $pdo->query("SELECT * FROM productos");
+    echo json_encode($stmt->fetchAll());
 
 } catch (Exception $e) {
     echo json_encode(["error" => $e->getMessage()]);
