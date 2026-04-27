@@ -14,13 +14,13 @@ $ca_path = __DIR__ . '/ca.pem'; // Asegúrate de subir el ca.pem a Render
 $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
 
 try {
-    // Configuración limpia de la conexión
     $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db", $user, $pass, [
         PDO::MYSQL_ATTR_SSL_CA => $ca_path,
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC // Esto quita los números repetidos
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC 
     ]);
 
+    // Solo lectura para evitar errores de inserción
     $stmt = $pdo->query("SELECT * FROM productos");
     $datos = $stmt->fetchAll();
 
